@@ -33,10 +33,6 @@ RUN cd /tmp && \
 RUN rm -rf /tmp/*
 
 RUN pip install --upgrade pip setuptools wheel
-RUN pip install cuda-python==12.1.0 \
-                scipy==1.10.1 \
-                numpy==1.23.5 \
-                Pillow==9.5.0 \
-                opencv-python==4.7.0.72 \
-                cupy-cuda12x==12.0.0 \
-                pynvml==11.5.0
+RUN pip install numpy==1.26.3 \
+                onnx==1.15.0
+RUN pip install --extra-index-url https://pypi.ngc.nvidia.com onnx_graphsurgeon==0.3.27

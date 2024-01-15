@@ -24,11 +24,11 @@ def main():
     # generate ONNX model
     X0 = gs.Variable(name="X0", dtype=np.float32, shape=input_shape)
     W0 = gs.Constant(name="W0", values=weights_data)
-    X1 = gs.Variable(name="X1", dtype=np.float32, shape=None)
+    X1 = gs.Variable(name="X1", dtype=np.float32, shape=input_shape)
     W1 = gs.Constant(name="W1", values=weights_data)
-    X2 = gs.Variable(name="X2", dtype=np.float32, shape=None)
+    X2 = gs.Variable(name="X2", dtype=np.float32, shape=input_shape)
     W2 = gs.Constant(name="W2", values=weights_data)
-    X3 = gs.Variable(name="X3", dtype=np.float32, shape=None)
+    X3 = gs.Variable(name="X3", dtype=np.float32, shape=input_shape)
 
     node_1 = gs.Node(name="Conv-1", op="Conv",
                    inputs=[X0, W0],
@@ -62,7 +62,8 @@ def main():
 
     graph = gs.Graph(nodes=[node_1, node_2, node_3], inputs=[X0], outputs=[X3], opset=opset_version)
     model = gs.export_onnx(graph)
-    model = onnx.shape_inference.infer_shapes(model)
+    # Shape inference does not quite work here because of the custom operator.
+    # model = onnx.shape_inference.infer_shapes(model)
     onnx.save(model, onnx_file_path)
 
 if __name__ == '__main__':

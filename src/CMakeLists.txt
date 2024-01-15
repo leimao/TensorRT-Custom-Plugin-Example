@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.28)
 
-project(COORD-CONV-NETWORKS VERSION 0.0.1 LANGUAGES CXX CUDA)
+project(TENSORRT-PLUGIN-EXAMPLE VERSION 0.0.1 LANGUAGES CXX CUDA)
 
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -8,40 +8,40 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # Find CUDA Toolkit
 find_package(CUDAToolkit REQUIRED)
 
-# find_path(CUDA_GEMM_INCLUDE_DIRS cuda_gemm_utils.hpp HINTS ${CMAKE_SOURCE_DIR}/include)
-# file(GLOB CUDA_GEMM_HEADERS ${CMAKE_SOURCE_DIR}/include/*.hpp ${CMAKE_SOURCE_DIR}/include/*.cuh)
+# add_subdirectory(plugins_reference)
 
-# # Add all the source files in the current directory to build the library
-# add_library(
-#     cuda_gemm 
-#     SHARED 
-#     cuda_gemm_utils.cu 
-#     00_non_coalesced_global_memory_access.cu
-#     01_coalesced_global_memory_access.cu
-#     02_2d_block_tiling.cu
-#     02_2d_block_tiling_vectorized_memory_access.cu
-#     03_2d_block_tiling_1d_thread_tiling.cu
-#     03_2d_block_tiling_1d_thread_tiling_vectorized_memory_access.cu
-#     04_2d_block_tiling_2d_thread_tiling.cu
-#     04_2d_block_tiling_2d_thread_tiling_vectorized_memory_access.cu
-#     05_2d_block_tiling_2d_thread_tiling_matrix_transpose.cu
-#     05_2d_block_tiling_2d_thread_tiling_matrix_transpose_vectorized_memory_access.cu
-#     06_2d_block_tiling_2d_warp_tiling_2d_thread_tiling_matrix_transpose.cu
-#     06_2d_block_tiling_2d_warp_tiling_2d_thread_tiling_matrix_transpose_vectorized_memory_access.cu
-#     07_2d_block_tiling_2d_warp_tiling_2d_thread_tiling_matrix_transpose_wmma.cu
-#     07_2d_block_tiling_2d_warp_tiling_2d_thread_tiling_matrix_transpose_wmma_vectorized_memory_access.cu
-# )
+add_executable(main main.cpp)
+
+
+# find_path(CUDA_GEMM_INCLUDE_DIRS cuda_gemm_utils.hpp HINTS ${CMAKE_SOURCE_DIR}/include)
+
+# TensorRT NvInfer related libs
+find_library(NVINFER_LIB nvinfer HINTS /usr/lib/x86_64-linux-gnu/ PATH_SUFFIXES lib lib64 REQUIRED)
+find_library(NVINFER_PLUGIN_LIB nvinfer_plugin HINTS /usr/lib/x86_64-linux-gnu/ PATH_SUFFIXES lib lib64 REQUIRED)
+
+# Add all the source files in the current directory to build the library
+add_library(
+    identity_conv 
+    SHARED 
+    ${CMAKE_CURRENT_SOURCE_DIR}/plugins/IdentityConvPlugin.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/plugins/IdentityConvPluginCreator.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/plugins/PluginUtils.cpp
+)
 
 # # Add the include directory of the library to the include directories of the project
-# target_include_directories(cuda_gemm PUBLIC ${CUDA_GEMM_INCLUDE_DIRS})
+target_include_directories(identity_conv PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/plugins)
 
 # # Set the CUDA architecture to compile the code for
 # # https://cmake.org/cmake/help/latest/prop_tgt/CUDA_ARCHITECTURES.html
-# set_target_properties(cuda_gemm PROPERTIES CUDA_ARCHITECTURES native)
-# install(TARGETS cuda_gemm DESTINATION lib)
+# set_target_properties(identity_conv PROPERTIES CUDA_ARCHITECTURES native)
+target_link_libraries(identity_conv PRIVATE ${NVINFER_LIB} ${NVINFER_PLUGIN_LIB} CUDA::cudart)
+
+
+
+# install(TARGETS identity_conv DESTINATION lib)
 # install(FILES ${CUDA_GEMM_HEADERS} DESTINATION include)
 
-add_executable(profile_cuda_gemm_fp32 main.cpp)
+# add_executable(profile_cuda_gemm_fp32 profile_cuda_gemm_fp32.cu)
 # target_link_libraries(profile_cuda_gemm_fp32 cuda_gemm CUDA::cublas)
 # set_target_properties(profile_cuda_gemm_fp32 PROPERTIES CUDA_ARCHITECTURES native)
 
