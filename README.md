@@ -64,3 +64,7 @@ $ ./build/src/run_engine
 ```
 
 If the custom plugin implementation and integration are correct, the output of the TensorRT engine should be the same as the input.
+
+## References
+
+- [TensorRT Custom Plugin Example](https://leimao.github.io/blog/TensorRT-Custom-Plugin-Example/)
