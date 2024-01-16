@@ -29,3 +29,8 @@ $ cmake -B build
 $ cmake --build build --config Release --parallel
 $ cmake --install build
 ```
+
+```
+./build/src/build_engine
+./build/src/run_engine
+```

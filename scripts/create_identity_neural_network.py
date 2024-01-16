@@ -41,6 +41,15 @@ def main():
                    })
     # Use an custom operator IdentityConv Instead.
     # This operator is not defined by ONNX and cannot be parsed by ONNX parser without custom plugin.
+    # node_2 = gs.Node(name="Conv-2", op="Conv",
+    #                inputs=[X1, W1],
+    #                outputs=[X2],
+    #                attrs={
+    #                    "kernel_shape": [1, 1],
+    #                    "strides": [1, 1],
+    #                    "pads": [0, 0, 0, 0],
+    #                    "group": num_groups
+    #                })
     node_2 = gs.Node(name="Conv-2", op="IdentityConv",
                    inputs=[X1, W1],
                    outputs=[X2],

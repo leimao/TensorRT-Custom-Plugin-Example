@@ -11,9 +11,19 @@
 constexpr char const* const kIDENTITY_CONV_PLUGIN_NAME{"IdentityConv"};
 constexpr char const* const kIDENTITY_CONV_PLUGIN_VERSION{"1"};
 
+namespace nvinfer1
+{
+namespace plugin
+{
+
 struct IdentityConvParameters
 {
     int32_t group;
+    nvinfer1::DataType dtype;
+    int32_t channelSize;
+    int32_t height;
+    int32_t width;
+    size_t dtypeBytes;
 };
 
 class IdentityConv : public nvinfer1::IPluginV2IOExt
@@ -81,16 +91,19 @@ private:
     void deserialize(uint8_t const* data, size_t length);
 
     // Tensor IO info known at the plugin configuration stage.
-    nvinfer1::DataType mDtype;
-    int32_t mChannelSize;
-    int32_t mHeight;
-    int32_t mWidth;
-    size_t mDtypeBytes;
+    // nvinfer1::DataType mDtype;
+    // int32_t mChannelSize;
+    // int32_t mHeight;
+    // int32_t mWidth;
+    // size_t mDtypeBytes;
 
     // TensorRT plugin parameters.
     IdentityConvParameters mParams;
 
     char const* mPluginNamespace;
 };
+
+} // namespace plugin
+} // namespace nvinfer1
 
 #endif // TENSORRT_IDENTITY_CONV_PLUGIN_H

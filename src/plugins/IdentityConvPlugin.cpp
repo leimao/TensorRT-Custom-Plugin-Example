@@ -10,6 +10,31 @@
 #include "IdentityConvPlugin.h"
 #include "PluginUtils.h"
 
+namespace nvinfer1
+{
+namespace plugin
+{
+
+// Write values into buffer
+template <typename Type, typename BufferType>
+void write(BufferType*& buffer, Type const& val)
+{
+    static_assert(sizeof(BufferType) == 1, "BufferType must be a 1 byte type.");
+    std::memcpy(buffer, &val, sizeof(Type));
+    buffer += sizeof(Type);
+}
+
+// Read values from buffer
+template <typename OutType, typename BufferType>
+OutType read(BufferType const*& buffer)
+{
+    static_assert(sizeof(BufferType) == 1, "BufferType must be a 1 byte type.");
+    OutType val{};
+    std::memcpy(&val, static_cast<void const*>(buffer), sizeof(OutType));
+    buffer += sizeof(OutType);
+    return val;
+}
+
 IdentityConv::IdentityConv(IdentityConvParameters params) : mParams{params} {}
 
 IdentityConv::IdentityConv(void const* data, size_t length)
@@ -24,6 +49,11 @@ void IdentityConv::deserialize(uint8_t const* data, size_t length)
     // purposes.
     uint8_t const* d{data};
     mParams.group = read<int32_t>(d);
+    mParams.dtype = read<nvinfer1::DataType>(d);
+    mParams.channelSize = read<int32_t>(d);
+    mParams.height = read<int32_t>(d);
+    mParams.width = read<int32_t>(d);
+    mParams.dtypeBytes = read<size_t>(d);
     PLUGIN_ASSERT(d == data + length);
 }
 
@@ -41,8 +71,10 @@ void IdentityConv::configurePlugin(nvinfer1::PluginTensorDesc const* in,
     // algorithm and data structures for the given configuration. Note: Resource
     // allocation is not allowed in this API because it causes a resource leak.
 
+    // This member function will only be called during engine build time.
+
     // Validate input arguments.
-    PLUGIN_ASSERT(nbInput == 1);
+    // PLUGIN_ASSERT(nbInput == 1);
     PLUGIN_ASSERT(nbOutput == 1);
     PLUGIN_ASSERT(in[0].dims.nbDims == 3);
     PLUGIN_ASSERT(out[0].dims.nbDims == 3);
@@ -51,22 +83,27 @@ void IdentityConv::configurePlugin(nvinfer1::PluginTensorDesc const* in,
     PLUGIN_ASSERT(in[0].dims.d[2] == out[0].dims.d[2]);
     PLUGIN_ASSERT(in[0].type == out[0].type);
 
-    mDtype = in[0].type;
-    mChannelSize = in[0].dims.d[0];
-    mHeight = in[0].dims.d[1];
-    mWidth = in[0].dims.d[2];
+    std::cout << "---------------" << std::endl;
+    std::cout << in[0].dims.d[0] << " " << in[0].dims.d[1] << " "
+              << in[0].dims.d[2] << std::endl;
+    std::cout << "---------------" << std::endl;
 
-    if (mDtype == nvinfer1::DataType::kINT8)
+    mParams.dtype = in[0].type;
+    mParams.channelSize = in[0].dims.d[0];
+    mParams.height = in[0].dims.d[1];
+    mParams.width = in[0].dims.d[2];
+
+    if (mParams.dtype == nvinfer1::DataType::kINT8)
     {
-        mDtypeBytes = 1;
+        mParams.dtypeBytes = 1;
     }
-    else if (mDtype == nvinfer1::DataType::kHALF)
+    else if (mParams.dtype == nvinfer1::DataType::kHALF)
     {
-        mDtypeBytes = 2;
+        mParams.dtypeBytes = 2;
     }
-    else if (mDtype == nvinfer1::DataType::kFLOAT)
+    else if (mParams.dtype == nvinfer1::DataType::kFLOAT)
     {
-        mDtypeBytes = 4;
+        mParams.dtypeBytes = 4;
     }
     else
     {
@@ -104,7 +141,7 @@ nvinfer1::Dims IdentityConv::getOutputDimensions(int32_t index,
     // by the plugin. This means that the batch dimension must not be specified
     // in getOutputDimensions.
     PLUGIN_ASSERT(index == 0);
-    PLUGIN_ASSERT(nbInputDims == 1);
+    // PLUGIN_ASSERT(nbInputDims == 1);
     PLUGIN_ASSERT(inputs != nullptr);
     // CHW
     nvinfer1::Dims dimsOutput;
@@ -129,7 +166,8 @@ size_t IdentityConv::getWorkspaceSize(int32_t maxBatchSize) const noexcept
 
 size_t IdentityConv::getSerializationSize() const noexcept
 {
-    return sizeof(IdentityConvParameters);
+    // return sizeof(IdentityConvParameters);
+    return sizeof(int32_t) * 4 + sizeof(nvinfer1::DataType) + sizeof(size_t);
 }
 
 void IdentityConv::serialize(void* buffer) const noexcept
@@ -138,6 +176,11 @@ void IdentityConv::serialize(void* buffer) const noexcept
     char* const a{d};
     // Be cautious, the order has to match deserialization.
     write(d, mParams.group);
+    write(d, mParams.dtype);
+    write(d, mParams.channelSize);
+    write(d, mParams.height);
+    write(d, mParams.width);
+    write(d, mParams.dtypeBytes);
     PLUGIN_ASSERT(d == a + getSerializationSize());
 }
 
@@ -145,20 +188,23 @@ bool IdentityConv::supportsFormatCombination(
     int32_t pos, nvinfer1::PluginTensorDesc const* inOut, int32_t nbInputs,
     int32_t nbOutputs) const noexcept
 {
-    PLUGIN_ASSERT(nbInputs == 1 && nbOutputs == 1 &&
-                  pos < nbInputs + nbOutputs);
+    // PLUGIN_ASSERT(nbInputs == 1 && nbOutputs == 1 &&
+    //               pos < nbInputs + nbOutputs);
     bool isValidCombination = false;
 
     // Suppose we support only a limited number of format configurations.
     isValidCombination |=
         (inOut[pos].format == nvinfer1::TensorFormat::kLINEAR &&
          inOut[pos].type == nvinfer1::DataType::kFLOAT);
-    isValidCombination |=
-        (inOut[pos].format == nvinfer1::TensorFormat::kLINEAR &&
-         inOut[pos].type == nvinfer1::DataType::kHALF);
-    isValidCombination |=
-        (inOut[pos].format == nvinfer1::TensorFormat::kCHW32 &&
-         inOut[pos].type == nvinfer1::DataType::kINT8);
+    // isValidCombination |=
+    //     (inOut[pos].format == nvinfer1::TensorFormat::kLINEAR &&
+    //      inOut[pos].type == nvinfer1::DataType::kHALF);
+    // isValidCombination |=
+    //     (inOut[pos].format == nvinfer1::TensorFormat::kCHW32 &&
+    //      inOut[pos].type == nvinfer1::DataType::kINT8);
+    // isValidCombination |= (inOut[pos].format ==
+    // nvinfer1::TensorFormat::kCHW32 &&
+    //      inOut[pos].type == nvinfer1::DataType::kINT8);
 
     return isValidCombination;
 }
@@ -170,7 +216,7 @@ char const* IdentityConv::getPluginType() const noexcept
 
 char const* IdentityConv::getPluginVersion() const noexcept
 {
-    return kIDENTITY_CONV_PLUGIN_NAME;
+    return kIDENTITY_CONV_PLUGIN_VERSION;
 }
 
 void IdentityConv::destroy() noexcept { delete this; }
@@ -210,7 +256,7 @@ IdentityConv::getOutputDataType(int32_t index,
 {
     // One output.
     PLUGIN_ASSERT(index == 0);
-    PLUGIN_ASSERT(nbInputs == 1);
+    // PLUGIN_ASSERT(nbInputs == 2);
     // The output type is the same as the input type.
     return inputTypes[0];
 }
@@ -232,11 +278,31 @@ int32_t IdentityConv::enqueue(int32_t batchSize, void const* const* inputs,
                               void* const* outputs, void* workspace,
                               cudaStream_t stream) noexcept
 {
-    size_t const inputSize{
-        static_cast<size_t>(batchSize * mChannelSize * mHeight * mWidth)};
-    size_t const inputSizeBytes{inputSize * mDtypeBytes};
+    size_t const inputSize{static_cast<size_t>(batchSize * mParams.channelSize *
+                                               mParams.height * mParams.width)};
+    size_t const inputSizeBytes{inputSize * mParams.dtypeBytes};
     cudaError_t const status{cudaMemcpyAsync(outputs[0], inputs[0],
                                              inputSizeBytes,
                                              cudaMemcpyDeviceToDevice, stream)};
+    // cudaStreamSynchronize(stream);
+    // // float val[4] = {8.f, 7.f, 5.5f, 3.2f};
+    // // val[0] = 8.f;
+    // // val[1] = 7.f;
+    // // val[2] = 5.5f;
+    // // val[3] = 3.2f;
+    // // // cudaMemcpyAsync(val, inputs[0], 4 * sizeof(float),
+    // cudaMemcpyDeviceToHost, stream);
+    // // cudaStreamSynchronize(stream);
+    // // std::cout << "HHHHHHHHHHHHHHHHHHHH" << std::endl;
+    // // std::cout << batchSize << " " << mParams.channelSize << " " <<
+    // mParams.height << " " << mParams.width << std::endl;
+    // // std::cout << val[0] << " " << val[1] << " " << val[2] << " " << val[3]
+    // << std::endl;
+    // // std::cout << "HHHHHHHHHHHHHHHHHHHH" << std::endl;
+    // return status;
+
     return status;
 }
+
+} // namespace plugin
+} // namespace nvinfer1

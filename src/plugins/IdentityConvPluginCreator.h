@@ -2,7 +2,14 @@
 #ifndef TENSORRT_IDENTITY_CONV_PLUGIN_CREATOR_H
 #define TENSORRT_IDENTITY_CONV_PLUGIN_CREATOR_H
 
+#include <vector>
+
 #include <NvInferRuntime.h>
+
+namespace nvinfer1
+{
+namespace plugin
+{
 
 class BaseCreator : public nvinfer1::IPluginCreator
 {
@@ -44,11 +51,21 @@ public:
                       size_t serialLength) noexcept override;
 
 private:
-    static nvinfer1::PluginFieldCollection mFC;
-    static std::vector<nvinfer1::PluginField> mPluginAttributes;
+    // static nvinfer1::PluginFieldCollection mFC;
+    // static std::vector<nvinfer1::PluginField> mPluginAttributes;
+    nvinfer1::PluginFieldCollection mFC;
+    std::vector<nvinfer1::PluginField> mPluginAttributes;
 
 protected:
     std::string mNamespace;
 };
+
+} // namespace plugin
+} // namespace nvinfer1
+
+extern "C" void setLoggerFinder(nvinfer1::ILoggerFinder* finder);
+
+extern "C" nvinfer1::IPluginCreator* const*
+getPluginCreators(int32_t& nbCreators);
 
 #endif // TENSORRT_IDENTITY_CONV_PLUGIN_CREATOR_H
