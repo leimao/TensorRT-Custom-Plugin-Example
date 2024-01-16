@@ -13,7 +13,7 @@ namespace nvinfer1
 namespace plugin
 {
 
-REGISTER_TENSORRT_PLUGIN(IdentityConvCreator);
+// REGISTER_TENSORRT_PLUGIN(IdentityConvCreator);
 
 // Plugin creator
 IdentityConvCreator::IdentityConvCreator() {}
