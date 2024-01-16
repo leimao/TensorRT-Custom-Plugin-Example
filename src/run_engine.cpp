@@ -89,7 +89,7 @@ int main(int argc, char** argv)
     // The plugin has already been serialized with the engine.
     // There is no need to load the plugin library.
     std::string const data_dir_path{"data"};
-    std::string const engine_file_name{"engine.trt"};
+    std::string const engine_file_name{"identity_neural_network.engine"};
     std::string const engine_file_path{data_dir_path + "/" + engine_file_name};
 
     // Create CUDA stream.

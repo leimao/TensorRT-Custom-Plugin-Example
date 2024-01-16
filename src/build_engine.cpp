@@ -40,7 +40,7 @@ int main(int argc, char** argv)
 
     std::string const data_dir_path{"data"};
     std::string const onnx_file_name{"identity_neural_network.onnx"};
-    std::string const engine_file_name{"engine.trt"};
+    std::string const engine_file_name{"identity_neural_network.engine"};
     std::string const onnx_file_path{data_dir_path + "/" + onnx_file_name};
     std::string const engine_file_path{data_dir_path + "/" + engine_file_name};
     std::string const plugin_library_name{"libidentity_conv.so"};
