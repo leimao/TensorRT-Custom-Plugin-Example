@@ -20,16 +20,14 @@ add_library(
     ${CMAKE_CURRENT_SOURCE_DIR}/plugins/IdentityConvPlugin.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/plugins/IdentityConvPluginCreator.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/plugins/PluginUtils.cpp
-    # ${CMAKE_CURRENT_SOURCE_DIR}/plugins/PluginRegistration.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/plugins/PluginRegistration.cpp
 )
 
 target_include_directories(identity_conv PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/plugins)
-target_link_libraries(identity_conv ${NVINFER_LIB} ${NVINFER_PLUGIN_LIB} CUDA::cudart)
+target_link_libraries(identity_conv PRIVATE ${NVINFER_LIB} ${NVINFER_PLUGIN_LIB} CUDA::cudart)
 
 add_executable(build_engine build_engine.cpp)
-target_link_libraries(build_engine ${NVINFER_LIB} ${NVONNXPARSER_LIB} ${NVINFER_PLUGIN_LIB} CUDA::cudart identity_conv)
+target_link_libraries(build_engine PRIVATE ${NVINFER_LIB} ${NVONNXPARSER_LIB} ${NVINFER_PLUGIN_LIB} CUDA::cudart identity_conv)
 
 add_executable(run_engine run_engine.cpp)
-target_link_libraries(run_engine ${NVINFER_LIB} CUDA::cudart identity_conv)
-
-# add_subdirectory(ref_plugin)
+target_link_libraries(run_engine PRIVATE ${NVINFER_LIB} CUDA::cudart)

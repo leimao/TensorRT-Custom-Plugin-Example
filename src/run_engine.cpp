@@ -89,12 +89,8 @@ int main(int argc, char** argv)
     std::string const data_dir_path{"data"};
     std::string const engine_file_name{"engine.trt"};
     std::string const engine_file_path{data_dir_path + "/" + engine_file_name};
-
     std::string const plugin_library_name{"libidentity_conv.so"};
-    // std::string const plugin_library_name{"libidentity_conv.a"};
     std::string const plugin_library_dir_path{"build/src"};
-    // std::string const plugin_library_name{"libefficientNMS.so"};
-    // std::string const plugin_library_dir_path{"build/src/ref_plugin"};
     std::string const plugin_library_path{plugin_library_dir_path + "/" +
                                           plugin_library_name};
     char const* const plugin_library_path_c_str{plugin_library_path.c_str()};
@@ -262,7 +258,7 @@ int main(int argc, char** argv)
     }
 
     // Run inference.
-    for (size_t i{0U}; i < 20; ++i)
+    for (size_t i{0U}; i < 8; ++i)
     {
         std::cout << "Iteration: " << i << std::endl;
         bool const status{context->enqueueV3(stream)};

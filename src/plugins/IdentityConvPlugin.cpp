@@ -74,7 +74,7 @@ void IdentityConv::configurePlugin(nvinfer1::PluginTensorDesc const* in,
     // This member function will only be called during engine build time.
 
     // Validate input arguments.
-    // PLUGIN_ASSERT(nbInput == 1);
+    PLUGIN_ASSERT(nbInput == 2);
     PLUGIN_ASSERT(nbOutput == 1);
     PLUGIN_ASSERT(in[0].dims.nbDims == 3);
     PLUGIN_ASSERT(out[0].dims.nbDims == 3);
@@ -82,11 +82,6 @@ void IdentityConv::configurePlugin(nvinfer1::PluginTensorDesc const* in,
     PLUGIN_ASSERT(in[0].dims.d[1] == out[0].dims.d[1]);
     PLUGIN_ASSERT(in[0].dims.d[2] == out[0].dims.d[2]);
     PLUGIN_ASSERT(in[0].type == out[0].type);
-
-    std::cout << "---------------" << std::endl;
-    std::cout << in[0].dims.d[0] << " " << in[0].dims.d[1] << " "
-              << in[0].dims.d[2] << std::endl;
-    std::cout << "---------------" << std::endl;
 
     mParams.dtype = in[0].type;
     mParams.channelSize = in[0].dims.d[0];
@@ -188,23 +183,24 @@ bool IdentityConv::supportsFormatCombination(
     int32_t pos, nvinfer1::PluginTensorDesc const* inOut, int32_t nbInputs,
     int32_t nbOutputs) const noexcept
 {
-    // PLUGIN_ASSERT(nbInputs == 1 && nbOutputs == 1 &&
-    //               pos < nbInputs + nbOutputs);
+    // For this method inputs are numbered 0..(nbInputs-1) and outputs are
+    // numbered nbInputs..(nbInputs+nbOutputs-1). Using this numbering, pos is
+    // an index into InOut, where 0 <= pos < nbInputs+nbOutputs.
+    PLUGIN_ASSERT(nbInputs == 2 && nbOutputs == 1 &&
+                  pos < nbInputs + nbOutputs);
     bool isValidCombination = false;
 
     // Suppose we support only a limited number of format configurations.
     isValidCombination |=
         (inOut[pos].format == nvinfer1::TensorFormat::kLINEAR &&
          inOut[pos].type == nvinfer1::DataType::kFLOAT);
-    // isValidCombination |=
-    //     (inOut[pos].format == nvinfer1::TensorFormat::kLINEAR &&
-    //      inOut[pos].type == nvinfer1::DataType::kHALF);
-    // isValidCombination |=
-    //     (inOut[pos].format == nvinfer1::TensorFormat::kCHW32 &&
-    //      inOut[pos].type == nvinfer1::DataType::kINT8);
-    // isValidCombination |= (inOut[pos].format ==
-    // nvinfer1::TensorFormat::kCHW32 &&
-    //      inOut[pos].type == nvinfer1::DataType::kINT8);
+    isValidCombination |=
+        (inOut[pos].format == nvinfer1::TensorFormat::kLINEAR &&
+         inOut[pos].type == nvinfer1::DataType::kHALF);
+    // Make sure the input tensor and output tensor types and formats are same.
+    isValidCombination &=
+        (pos < nbInputs || (inOut[pos].format == inOut[0].format &&
+                            inOut[pos].type == inOut[0].type));
 
     return isValidCombination;
 }
@@ -256,7 +252,7 @@ IdentityConv::getOutputDataType(int32_t index,
 {
     // One output.
     PLUGIN_ASSERT(index == 0);
-    // PLUGIN_ASSERT(nbInputs == 2);
+    PLUGIN_ASSERT(nbInputs == 2);
     // The output type is the same as the input type.
     return inputTypes[0];
 }
@@ -284,23 +280,6 @@ int32_t IdentityConv::enqueue(int32_t batchSize, void const* const* inputs,
     cudaError_t const status{cudaMemcpyAsync(outputs[0], inputs[0],
                                              inputSizeBytes,
                                              cudaMemcpyDeviceToDevice, stream)};
-    // cudaStreamSynchronize(stream);
-    // // float val[4] = {8.f, 7.f, 5.5f, 3.2f};
-    // // val[0] = 8.f;
-    // // val[1] = 7.f;
-    // // val[2] = 5.5f;
-    // // val[3] = 3.2f;
-    // // // cudaMemcpyAsync(val, inputs[0], 4 * sizeof(float),
-    // cudaMemcpyDeviceToHost, stream);
-    // // cudaStreamSynchronize(stream);
-    // // std::cout << "HHHHHHHHHHHHHHHHHHHH" << std::endl;
-    // // std::cout << batchSize << " " << mParams.channelSize << " " <<
-    // mParams.height << " " << mParams.width << std::endl;
-    // // std::cout << val[0] << " " << val[1] << " " << val[2] << " " << val[3]
-    // << std::endl;
-    // // std::cout << "HHHHHHHHHHHHHHHHHHHH" << std::endl;
-    // return status;
-
     return status;
 }
 

@@ -90,13 +90,6 @@ public:
 private:
     void deserialize(uint8_t const* data, size_t length);
 
-    // Tensor IO info known at the plugin configuration stage.
-    // nvinfer1::DataType mDtype;
-    // int32_t mChannelSize;
-    // int32_t mHeight;
-    // int32_t mWidth;
-    // size_t mDtypeBytes;
-
     // TensorRT plugin parameters.
     IdentityConvParameters mParams;
 

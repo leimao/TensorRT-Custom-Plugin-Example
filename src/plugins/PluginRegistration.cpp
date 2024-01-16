@@ -5,11 +5,6 @@
 
 #include "IdentityConvPluginCreator.h"
 
-// namespace nvinfer1
-// {
-// namespace plugin
-// {
-
 class ThreadSafeLoggerFinder
 {
 public:
@@ -51,21 +46,6 @@ ThreadSafeLoggerFinder gLoggerFinder;
 //     return gLoggerFinder.getLogger();
 // }
 
-// extern "C" void setLoggerFinder(nvinfer1::ILoggerFinder* finder)
-// {
-//     gLoggerFinder.setLoggerFinder(finder);
-// }
-
-// extern "C" nvinfer1::IPluginCreator* const*
-// getPluginCreators(int32_t& nbCreators)
-// {
-//     nbCreators = 1;
-//     static IdentityConvCreator identityConvCreator{};
-//     static nvinfer1::IPluginCreator* const pluginCreatorList[] = {
-//         &identityConvCreator};
-//     return pluginCreatorList;
-// }
-
 extern "C" void setLoggerFinder(nvinfer1::ILoggerFinder* finder)
 {
     gLoggerFinder.setLoggerFinder(finder);
@@ -74,13 +54,9 @@ extern "C" void setLoggerFinder(nvinfer1::ILoggerFinder* finder)
 extern "C" nvinfer1::IPluginCreator* const*
 getPluginCreators(int32_t& nbCreators)
 {
-    std::cout << "----getPluginCreators----" << std::endl;
     nbCreators = 1;
     static nvinfer1::plugin::IdentityConvCreator identityConvCreator{};
     static nvinfer1::IPluginCreator* const pluginCreatorList[] = {
         &identityConvCreator};
     return pluginCreatorList;
 }
-
-// } // namespace plugin
-// } // namespace nvinfer1

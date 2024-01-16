@@ -11,8 +11,8 @@
 #include <NvInfer.h>
 #include <NvOnnxParser.h>
 
-// #include "plugins/PluginRegistration.h"
 #include "plugins/IdentityConvPluginCreator.h"
+#include "plugins/PluginRegistration.h"
 
 class Logger : public nvinfer1::ILogger
 {
@@ -45,53 +45,18 @@ int main(int argc, char** argv)
     std::string const engine_file_name{"engine.trt"};
     std::string const onnx_file_path{data_dir_path + "/" + onnx_file_name};
     std::string const engine_file_path{data_dir_path + "/" + engine_file_name};
-
     std::string const plugin_library_name{"libidentity_conv.so"};
-    // std::string const plugin_library_name{"libidentity_conv.a"};
     std::string const plugin_library_dir_path{"build/src"};
-    // std::string const plugin_library_name{"libefficientNMS.so"};
-    // std::string const plugin_library_dir_path{"build/src/ref_plugin"};
     std::string const plugin_library_path{plugin_library_dir_path + "/" +
                                           plugin_library_name};
     char const* const plugin_library_path_c_str{plugin_library_path.c_str()};
-    std::cout << "plugin_library_path_c_str: " << plugin_library_path_c_str
-              << std::endl;
-    // void *handle1;
-    // handle1 = dlopen(plugin_library_path.c_str(), RTLD_NOW);
-    // if (!handle1)
-    // {
-    //     std::cerr << "Cannot open library: " << dlerror() << '\n';
-    //     return EXIT_FAILURE;
-    // }
 
-    // initLibNvInferPlugins(&gLogger, "");
+    // This plugin creator initialization step is compulsory for plugin dynamic
+    // registration. Otherwise loading the plugin library will complain the
+    // plugin creator is an undefined symbol.
     std::unique_ptr<nvinfer1::plugin::IdentityConvCreator> pluginCreator{
         new nvinfer1::plugin::IdentityConvCreator{}};
     pluginCreator->setPluginNamespace("");
-
-    // nvinfer1::plugin::gLogger = static_cast<nvinfer1::ILogger*>(logger);
-    // std::string pluginType = std::string{pluginCreator->getPluginNamespace()}
-    //     + "::" + std::string{pluginCreator->getPluginName()} + " version "
-    //     + std::string{pluginCreator->getPluginVersion()};
-
-    // if (mRegistryList.find(pluginType) == mRegistryList.end())
-    // {
-    //     bool status = getPluginRegistry()->registerCreator(*pluginCreator,
-    //     libNamespace); if (status)
-    //     {
-    //         mRegistry.push(std::move(pluginCreator));
-    //         mRegistryList.insert(pluginType);
-    //         verboseMsg = "Registered plugin creator - " + pluginType;
-    //     }
-    //     else
-    //     {
-    //         errorMsg = "Could not register plugin creator -  " + pluginType;
-    //     }
-    // }
-    // else
-    // {
-    //     verboseMsg = "Plugin creator already registered - " + pluginType;
-    // }
 
     // Create the builder.
     std::unique_ptr<nvinfer1::IBuilder, InferDeleter> builder{
@@ -129,7 +94,6 @@ int main(int argc, char** argv)
         std::cerr << "Failed to create the parser." << std::endl;
         return EXIT_FAILURE;
     }
-
     parser->parseFromFile(
         onnx_file_path.c_str(),
         static_cast<int32_t>(nvinfer1::ILogger::Severity::kWARNING));
