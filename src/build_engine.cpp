@@ -6,8 +6,6 @@
 #include <memory>
 #include <sstream>
 
-#include <dlfcn.h>
-
 #include <NvInfer.h>
 #include <NvOnnxParser.h>
 
