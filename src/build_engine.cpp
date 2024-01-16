@@ -9,8 +9,6 @@
 #include <NvInfer.h>
 #include <NvOnnxParser.h>
 
-#include "plugins/IdentityConvPluginCreator.h"
-
 class CustomLogger : public nvinfer1::ILogger
 {
     void log(nvinfer1::ILogger::Severity severity,
@@ -46,13 +44,6 @@ int main(int argc, char** argv)
     std::string const plugin_library_path{plugin_library_dir_path + "/" +
                                           plugin_library_name};
     char const* const plugin_library_path_c_str{plugin_library_path.c_str()};
-
-    // This plugin creator initialization step is compulsory for plugin dynamic
-    // registration. Otherwise loading the plugin library will complain the
-    // plugin creator is an undefined symbol.
-    std::unique_ptr<nvinfer1::plugin::IdentityConvCreator> pluginCreator{
-        new nvinfer1::plugin::IdentityConvCreator{}};
-    pluginCreator->setPluginNamespace("");
 
     // Create the builder.
     std::unique_ptr<nvinfer1::IBuilder, InferDeleter> builder{
