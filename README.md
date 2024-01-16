@@ -1,4 +1,4 @@
-# TensorRT Plugin Example
+# TensorRT Custom Plugin Example
 
 ## Introduction
 
