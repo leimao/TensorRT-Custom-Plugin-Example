@@ -33,13 +33,13 @@ void check_last(const char* const file, const int line)
     }
 }
 
-class Logger : public nvinfer1::ILogger
+class CustomLogger : public nvinfer1::ILogger
 {
     void log(nvinfer1::ILogger::Severity severity,
              const char* msg) noexcept override
     {
         // suppress info-level messages
-        if (severity <= nvinfer1::ILogger::Severity::kVERBOSE)
+        if (severity <= nvinfer1::ILogger::Severity::kINFO)
         {
             std::cout << msg << std::endl;
         }
@@ -84,28 +84,25 @@ bool all_close(float const* a, float const* b, size_t size, float rtol = 1e-5f,
 
 int main(int argc, char** argv)
 {
-    Logger gLogger;
+    CustomLogger logger{};
 
+    // The plugin has already been serialized with the engine.
+    // There is no need to load the plugin library.
     std::string const data_dir_path{"data"};
     std::string const engine_file_name{"engine.trt"};
     std::string const engine_file_path{data_dir_path + "/" + engine_file_name};
-    std::string const plugin_library_name{"libidentity_conv.so"};
-    std::string const plugin_library_dir_path{"build/src"};
-    std::string const plugin_library_path{plugin_library_dir_path + "/" +
-                                          plugin_library_name};
-    char const* const plugin_library_path_c_str{plugin_library_path.c_str()};
-    std::cout << "plugin_library_path_c_str: " << plugin_library_path_c_str
-              << std::endl;
 
     // Create CUDA stream.
     cudaStream_t stream;
     CHECK_CUDA_ERROR(cudaStreamCreate(&stream));
 
+    // The engine we built is FP32 NCHW IO.
     nvinfer1::DataType const expected_dtype{nvinfer1::DataType::kFLOAT};
     size_t const expected_dtype_byte_size{4U};
     nvinfer1::TensorFormat const expected_format{
         nvinfer1::TensorFormat::kLINEAR};
 
+    // IO tensor information and buffers.
     std::vector<nvinfer1::Dims> input_tensor_shapes{};
     std::vector<nvinfer1::Dims> output_tensor_shapes{};
     std::vector<size_t> input_tensor_sizes{};
@@ -117,19 +114,18 @@ int main(int argc, char** argv)
     std::vector<void*> output_tensor_host_buffers{};
     std::vector<void*> output_tensor_device_buffers{};
 
-    // Error tolerance.
+    // Error tolerance for unit test.
     float const rtol{1e-5f};
     float const atol{1e-8f};
 
     // Deserialize the engine.
     std::unique_ptr<nvinfer1::IRuntime, InferDeleter> runtime{
-        nvinfer1::createInferRuntime(gLogger)};
+        nvinfer1::createInferRuntime(logger)};
     if (runtime == nullptr)
     {
         std::cerr << "Failed to create the runtime." << std::endl;
         return EXIT_FAILURE;
     }
-    // runtime->getPluginRegistry().loadLibrary(plugin_library_path.c_str());
 
     std::ifstream engine_file{engine_file_path, std::ios::binary};
     if (!engine_file)
@@ -139,8 +135,7 @@ int main(int argc, char** argv)
     }
 
     engine_file.seekg(0, std::ios::end);
-    std::size_t const engine_file_size{
-        static_cast<std::size_t>(engine_file.tellg())};
+    size_t const engine_file_size{static_cast<size_t>(engine_file.tellg())};
     engine_file.seekg(0, std::ios::beg);
 
     std::unique_ptr<char[]> engine_data{new char[engine_file_size]};
@@ -154,18 +149,18 @@ int main(int argc, char** argv)
         return EXIT_FAILURE;
     }
 
-    // Create the context.
+    // Create the execution context.
     std::unique_ptr<nvinfer1::IExecutionContext, InferDeleter> context{
         engine->createExecutionContext()};
     if (context == nullptr)
     {
-        std::cerr << "Failed to create the context." << std::endl;
+        std::cerr << "Failed to create the execution context." << std::endl;
         return EXIT_FAILURE;
     }
 
     // Check the number of IO tensors.
     int32_t const num_io_tensors{engine->getNbIOTensors()};
-    std::cout << "Number of IO tensors: " << num_io_tensors << std::endl;
+    std::cout << "Number of IO Tensors: " << num_io_tensors << std::endl;
     for (int32_t i{0}; i < num_io_tensors; ++i)
     {
         char const* const tensor_name{engine->getIOTensorName(i)};
@@ -185,10 +180,12 @@ int main(int argc, char** argv)
             std::cerr << "Invalid tensor format." << std::endl;
             return EXIT_FAILURE;
         }
+        // Because the input and output shapes are static,
+        // there is no need to set the IO tensor shapes.
         nvinfer1::Dims const shape{engine->getTensorShape(tensor_name)};
         // Print out dims.
         size_t tensor_size{1U};
-        std::cout << "Dims: ";
+        std::cout << "Tensor Dims: ";
         for (int32_t j{0}; j < shape.nbDims; ++j)
         {
             tensor_size *= shape.d[j];
@@ -196,6 +193,7 @@ int main(int argc, char** argv)
         }
         std::cout << std::endl;
 
+        // FP32 NCHW tensor format.
         size_t tensor_size_bytes{tensor_size * expected_dtype_byte_size};
 
         // Allocate host memory for the tensor.
@@ -227,13 +225,12 @@ int main(int argc, char** argv)
     // Create random input values.
     for (size_t i{0U}; i < input_tensor_host_buffers.size(); ++i)
     {
-        nvinfer1::Dims const shape{input_tensor_shapes.at(i)};
         size_t const tensor_size{input_tensor_sizes.at(i)};
         create_random_data(static_cast<float*>(input_tensor_host_buffers.at(i)),
                            tensor_size);
     }
 
-    // Copy input data to device.
+    // Copy input data from host to device.
     for (size_t i{0U}; i < input_tensor_host_buffers.size(); ++i)
     {
         size_t const tensor_size_bytes{input_tensor_sizes.at(i) *
@@ -257,10 +254,10 @@ int main(int argc, char** argv)
                                   output_tensor_device_buffers.at(i));
     }
 
-    // Run inference.
-    for (size_t i{0U}; i < 8; ++i)
+    // Run inference a couple of times.
+    size_t const num_iterations{8U};
+    for (size_t i{0U}; i < num_iterations; ++i)
     {
-        std::cout << "Iteration: " << i << std::endl;
         bool const status{context->enqueueV3(stream)};
         if (!status)
         {
@@ -272,7 +269,7 @@ int main(int argc, char** argv)
     // Synchronize.
     CHECK_CUDA_ERROR(cudaStreamSynchronize(stream));
 
-    // Copy output data to host.
+    // Copy output data from device to host.
     for (size_t i{0U}; i < output_tensor_host_buffers.size(); ++i)
     {
         size_t const tensor_size_bytes{output_tensor_sizes.at(i) *
@@ -283,13 +280,6 @@ int main(int argc, char** argv)
     }
 
     // Verify the output given it's an identity neural network.
-    // bool is_valid{true};
-    if (input_tensor_host_buffers.size() != output_tensor_host_buffers.size())
-    {
-        std::cerr << "Number of input and output tensors do not match."
-                  << std::endl;
-        return EXIT_FAILURE;
-    }
     for (size_t i{0U}; i < input_tensor_host_buffers.size(); ++i)
     {
         if (input_tensor_sizes.at(i) != output_tensor_sizes.at(i))
@@ -307,6 +297,8 @@ int main(int argc, char** argv)
             return EXIT_FAILURE;
         }
     }
+
+    std::cout << "Successfully verified the output." << std::endl;
 
     // Release resources.
     CHECK_CUDA_ERROR(cudaStreamDestroy(stream));

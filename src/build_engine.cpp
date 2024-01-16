@@ -12,15 +12,13 @@
 #include <NvOnnxParser.h>
 
 #include "plugins/IdentityConvPluginCreator.h"
-#include "plugins/PluginRegistration.h"
 
-class Logger : public nvinfer1::ILogger
+class CustomLogger : public nvinfer1::ILogger
 {
     void log(nvinfer1::ILogger::Severity severity,
              const char* msg) noexcept override
     {
-        // suppress info-level messages
-        if (severity <= nvinfer1::ILogger::Severity::kVERBOSE)
+        if (severity <= nvinfer1::ILogger::Severity::kINFO)
         {
             std::cout << msg << std::endl;
         }
@@ -38,7 +36,7 @@ struct InferDeleter
 
 int main(int argc, char** argv)
 {
-    Logger gLogger;
+    CustomLogger logger;
 
     std::string const data_dir_path{"data"};
     std::string const onnx_file_name{"identity_neural_network.onnx"};
@@ -60,7 +58,7 @@ int main(int argc, char** argv)
 
     // Create the builder.
     std::unique_ptr<nvinfer1::IBuilder, InferDeleter> builder{
-        nvinfer1::createInferBuilder(gLogger)};
+        nvinfer1::createInferBuilder(logger)};
     if (builder == nullptr)
     {
         std::cerr << "Failed to create the builder." << std::endl;
@@ -88,7 +86,7 @@ int main(int argc, char** argv)
 
     // Create the parser.
     std::unique_ptr<nvonnxparser::IParser, InferDeleter> parser{
-        nvonnxparser::createParser(*network, gLogger)};
+        nvonnxparser::createParser(*network, logger)};
     if (parser == nullptr)
     {
         std::cerr << "Failed to create the parser." << std::endl;
@@ -136,6 +134,9 @@ int main(int argc, char** argv)
     engineFile.write(static_cast<char const*>(serializedModel->data()),
                      serializedModel->size());
     engineFile.close();
+
+    std::cout << "Successfully serialized the engine to the file: "
+              << engine_file_path << std::endl;
 
     return EXIT_SUCCESS;
 }

@@ -17,7 +17,32 @@ namespace plugin
 // REGISTER_TENSORRT_PLUGIN(IdentityConvCreator);
 
 // Plugin creator
-IdentityConvCreator::IdentityConvCreator() {}
+IdentityConvCreator::IdentityConvCreator()
+{
+    // Declare the ONNX attributes that the ONNX parser will collect from the
+    // ONNX model that contains the IdentityConv node.
+
+    // In our dummy case,
+    // attrs={
+    //     "kernel_shape": [1, 1],
+    //     "strides": [1, 1],
+    //     "pads": [0, 0, 0, 0],
+    //     "group": num_groups
+    // }
+
+    mPluginAttributes.clear();
+    mPluginAttributes.emplace_back(nvinfer1::PluginField(
+        "kernel_shape", nullptr, PluginFieldType::kINT32, 2));
+    mPluginAttributes.emplace_back(
+        nvinfer1::PluginField("strides", nullptr, PluginFieldType::kINT32, 2));
+    mPluginAttributes.emplace_back(
+        nvinfer1::PluginField("pads", nullptr, PluginFieldType::kINT32, 4));
+    mPluginAttributes.emplace_back(
+        nvinfer1::PluginField("group", nullptr, PluginFieldType::kINT32, 1));
+
+    mFC.nbFields = mPluginAttributes.size();
+    mFC.fields = mPluginAttributes.data();
+}
 
 char const* IdentityConvCreator::getPluginName() const noexcept
 {
@@ -39,14 +64,6 @@ nvinfer1::IPluginV2IOExt* IdentityConvCreator::createPlugin(
     char const* name, nvinfer1::PluginFieldCollection const* fc) noexcept
 {
     // The attributes from the ONNX node will be parsed and passed via fc.
-    // In our dummy case,
-    // attrs={
-    //     "kernel_shape": [1, 1],
-    //     "strides": [1, 1],
-    //     "pads": [0, 0, 0, 0],
-    //     "group": num_groups
-    // }
-
     try
     {
         nvinfer1::PluginField const* fields{fc->fields};
@@ -103,6 +120,39 @@ nvinfer1::IPluginV2IOExt* IdentityConvCreator::createPlugin(
                 group = *(static_cast<int32_t const*>(fields[i].data));
             }
         }
+
+        // Log the attributes parsed from ONNX node.
+        std::stringstream ss;
+        ss << "Plugin Attributes:";
+        logInfo(ss.str().c_str());
+
+        ss.str("");
+        ss << "kernel_shape: ";
+        for (auto const& val : kernelShape)
+        {
+            ss << val << " ";
+        }
+        logInfo(ss.str().c_str());
+
+        ss.str("");
+        ss << "strides: ";
+        for (auto const& val : strides)
+        {
+            ss << val << " ";
+        }
+        logInfo(ss.str().c_str());
+
+        ss.str("");
+        ss << "pads: ";
+        for (auto const& val : pads)
+        {
+            ss << val << " ";
+        }
+        logInfo(ss.str().c_str());
+
+        ss.str("");
+        ss << "group: " << group;
+        logInfo(ss.str().c_str());
 
         IdentityConvParameters const params{.group = group};
 

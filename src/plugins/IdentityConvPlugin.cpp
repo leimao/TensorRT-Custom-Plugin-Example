@@ -136,12 +136,10 @@ nvinfer1::Dims IdentityConv::getOutputDimensions(int32_t index,
     // by the plugin. This means that the batch dimension must not be specified
     // in getOutputDimensions.
     PLUGIN_ASSERT(index == 0);
-    // PLUGIN_ASSERT(nbInputDims == 1);
+    PLUGIN_ASSERT(nbInputDims == 2);
     PLUGIN_ASSERT(inputs != nullptr);
     // CHW
     nvinfer1::Dims dimsOutput;
-    // Don't trigger null dereference since we check if inputs is nullptr above.
-    // NOLINTNEXTLINE(clang-analyzer-core.NullDereference)
     PLUGIN_ASSERT(inputs[0].nbDims == 3);
     // Identity operation.
     // Just copy the dimensions from the input tensor.
