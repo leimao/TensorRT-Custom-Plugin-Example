@@ -32,7 +32,7 @@ struct InferDeleter
 
 int main(int argc, char** argv)
 {
-    CustomLogger logger;
+    CustomLogger logger{};
 
     std::string const data_dir_path{"data"};
     std::string const onnx_file_name{"identity_neural_network.onnx"};
