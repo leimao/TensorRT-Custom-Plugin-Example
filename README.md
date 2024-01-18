@@ -2,9 +2,9 @@
 
 ## Introduction
 
-This is a quick and self-contained TensorRT example. It demonstrates how to build a custom TensorRT plugin and how to use it in a TensorRT engine without complicated dependencies and too much abstraction.
+This is a quick and self-contained TensorRT example. It demonstrates how to build a TensorRT custom plugin and how to use it in a TensorRT engine without complicated dependencies and too much abstraction.
 
-The ONNX model we created is a simple identity neural network that consists of three `Conv` nodes whose weights and attributes are orchestrated so that the convolution operation is a simple identity operation. The second `Conv` node in the ONNX is replaced with a custom ONNX node `IdentityConv` that is not defined in the ONNX operator set. The custom TensorRT plugin is implemented to perform the `IdentityConv` operation using CUDA memory copy in the TensorRT engine.
+The ONNX model we created is a simple identity neural network that consists of three `Conv` nodes whose weights and attributes are orchestrated so that the convolution operation is a simple identity operation. The second `Conv` node in the ONNX is replaced with a ONNX custom node `IdentityConv` that is not defined in the ONNX operator set. The TensorRT custom plugin is implemented to perform the `IdentityConv` operation using CUDA memory copy in the TensorRT engine.
 
 ## Usages
 
