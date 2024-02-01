@@ -112,7 +112,7 @@ class IdentityNeuralNetwork(nn.Module):
 
 if __name__ == "__main__":
 
-    opset_version = 15
+    opset_version = 13
     data_directory_path = "data"
     onnx_file_name = "identity_neural_network.onnx"
     onnx_file_path = os.path.join(data_directory_path, onnx_file_name)
