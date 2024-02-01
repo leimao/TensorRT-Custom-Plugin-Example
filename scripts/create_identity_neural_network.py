@@ -1,7 +1,9 @@
 # Create a neural network that consists of three identity convolutional layers.
 
 import os
+
 import numpy as np
+
 import onnx
 import onnx_graphsurgeon as gs
 
