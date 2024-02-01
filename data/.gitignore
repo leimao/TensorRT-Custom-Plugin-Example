@@ -1,2 +1,3 @@
 *.trt
 *.engine
+*.onnx
