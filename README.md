@@ -45,6 +45,24 @@ $ python scripts/create_identity_neural_network.py
 
 The ONNX model will be saved as `identity_neural_network.onnx` under the `data` directory.
 
+### Export ONNX Model
+
+Alternatively, the ONNX model can be exported from a PyTorch model.
+
+To export an ONNX model with ONNX Opset 15 or above, please run the following command.
+
+```bash
+$ python scripts/export_identity_neural_network_new_opset.py
+```
+
+To export an ONNX model with ONNX Opset 14 or below, please run the following command.
+
+```bash
+$ python scripts/export_identity_neural_network_old_opset.py
+```
+
+The ONNX model will be saved as `identity_neural_network.onnx` under the `data` directory.
+
 ### Build TensorRT Engine
 
 To build the TensorRT engine from the ONNX model, please run the following command.

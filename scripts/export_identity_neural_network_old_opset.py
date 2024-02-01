@@ -36,6 +36,40 @@ class IdentityConvBase(nn.Module):
         return self.conv(x)
 
 
+class DummyIdentityConvOp(torch.autograd.Function):
+
+    @staticmethod
+    def symbolic(g, input, weight):
+        output_type = input.type().with_sizes(_get_tensor_sizes(input))
+        return g.op("CustomTorchOps::IdentityConv", input,
+                    weight).setType(output_type)
+
+    @staticmethod
+    def forward(ctx, input, weight):
+        # We don't have to actually implement the correct forward pass,
+        # as long as the shape of the output is correct.
+        return input
+
+
+class DummyIdentityConv(nn.Module):
+
+    def __init__(self, channels):
+        super(DummyIdentityConv, self).__init__()
+        self.kernel_shape = (1, 1)
+        self.strides = (1, 1)
+        self.pads = (0, 0, 0, 0)
+        self.group = channels
+
+        # Fill the weight values with 1.0.
+        self.weight = torch.ones(channels, 1, 1, 1)
+        # Turn off the gradient for the weights, making it a constant.
+        self.weight.requires_grad = False
+
+    def forward(self, x):
+        x = DummyIdentityConvOp.apply(x, self.weight)
+        return x
+
+
 class IdentityConv(IdentityConvBase):
 
     __constants__ = ["kernel_shape", "strides", "pads", "group"]
@@ -63,59 +97,22 @@ class IdentityConv(IdentityConvBase):
         return x
 
 
-class IdentityConvOp(torch.autograd.Function):
-
-    @staticmethod
-    def symbolic(g, input, weight):
-        output_type = input.type().with_sizes(_get_tensor_sizes(input))
-        return g.op("CustomTorchOps::IdentityConv", input,
-                    weight).setType(output_type)
-
-    @staticmethod
-    def forward(ctx, input, weight):
-        channels = input.size(1)
-        output = torch.nn.functional.conv2d(input=input,
-                                            weight=weight,
-                                            bias=None,
-                                            stride=(1, 1),
-                                            padding=(0, 0),
-                                            dilation=(1, 1),
-                                            groups=channels)
-        return output
-
-
-class IdentityConv(nn.Module):
-
-    def __init__(self, channels):
-        super(IdentityConv, self).__init__()
-        self.kernel_shape = (1, 1)
-        self.strides = (1, 1)
-        self.pads = (0, 0, 0, 0)
-        self.group = channels
-
-        # Fill the weight values with 1.0.
-        self.weight = torch.ones(channels, 1, 1, 1)
-        # Turn off the gradient for the weights, making it a constant.
-        self.weight.requires_grad = False
-
-    def forward(self, x):
-        x = IdentityConvOp.apply(x, self.weight)
-        return x
-
-
 class IdentityNeuralNetwork(nn.Module):
 
     def __init__(self, channels):
         super(IdentityNeuralNetwork, self).__init__()
         self.conv1 = IdentityConvBase(channels)
-        # self.conv2 = IdentityConv()
         self.conv2 = IdentityConv(channels=channels)
-
         self.conv3 = IdentityConvBase(channels)
+
+        self.conv2_export = DummyIdentityConv(channels=channels)
 
     def forward(self, x):
         x = self.conv1(x)
-        x = self.conv2(x)
+        if torch.onnx.is_in_onnx_export():
+            x = self.conv2_export(x)
+        else:
+            x = self.conv2(x)
         x = self.conv3(x)
         return x
 
