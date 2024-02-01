@@ -1,5 +1,4 @@
 # Define a PyTorch identity neural network and export it to ONNX format with custom ONNX operators.
-# This only works for ONNX Opset 15 and above.
 
 # Example: https://github.com/microsoft/onnxruntime-extensions/blob/d47a3dd2ddf5d11139671f81a399ff43605f7e43/test/test_torch_ops.py
 # Example: https://github.com/onnx/onnx/issues/4569
