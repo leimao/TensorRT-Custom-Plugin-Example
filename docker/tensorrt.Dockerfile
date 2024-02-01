@@ -36,3 +36,4 @@ RUN pip install --upgrade pip setuptools wheel
 RUN pip install numpy==1.26.3 \
                 onnx==1.15.0
 RUN pip install --extra-index-url https://pypi.ngc.nvidia.com onnx_graphsurgeon==0.3.27
+RUN pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121

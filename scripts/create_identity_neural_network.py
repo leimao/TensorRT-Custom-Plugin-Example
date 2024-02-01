@@ -1,9 +1,12 @@
 # Create a neural network that consists of three identity convolutional layers.
 
 import os
+
 import numpy as np
+
 import onnx
 import onnx_graphsurgeon as gs
+
 
 def main():
 
@@ -30,15 +33,16 @@ def main():
     W2 = gs.Constant(name="W2", values=weights_data)
     X3 = gs.Variable(name="X3", dtype=np.float32, shape=input_shape)
 
-    node_1 = gs.Node(name="Conv-1", op="Conv",
-                   inputs=[X0, W0],
-                   outputs=[X1],
-                   attrs={
-                       "kernel_shape": [1, 1],
-                       "strides": [1, 1],
-                       "pads": [0, 0, 0, 0],
-                       "group": num_groups
-                   })
+    node_1 = gs.Node(name="Conv-1",
+                     op="Conv",
+                     inputs=[X0, W0],
+                     outputs=[X1],
+                     attrs={
+                         "kernel_shape": [1, 1],
+                         "strides": [1, 1],
+                         "pads": [0, 0, 0, 0],
+                         "group": num_groups
+                     })
     # Use an custom operator IdentityConv Instead.
     # This operator is not defined by ONNX and cannot be parsed by ONNX parser without custom plugin.
     # node_2 = gs.Node(name="Conv-2", op="Conv",
@@ -50,30 +54,36 @@ def main():
     #                    "pads": [0, 0, 0, 0],
     #                    "group": num_groups
     #                })
-    node_2 = gs.Node(name="Conv-2", op="IdentityConv",
-                   inputs=[X1, W1],
-                   outputs=[X2],
-                   attrs={
-                       "kernel_shape": [1, 1],
-                       "strides": [1, 1],
-                       "pads": [0, 0, 0, 0],
-                       "group": num_groups
-                   })
-    node_3 = gs.Node(name="Conv-3", op="Conv",
-                   inputs=[X2, W2],
-                   outputs=[X3],
-                   attrs={
-                       "kernel_shape": [1, 1],
-                       "strides": [1, 1],
-                       "pads": [0, 0, 0, 0],
-                       "group": num_groups
-                   })
+    node_2 = gs.Node(name="Conv-2",
+                     op="IdentityConv",
+                     inputs=[X1, W1],
+                     outputs=[X2],
+                     attrs={
+                         "kernel_shape": [1, 1],
+                         "strides": [1, 1],
+                         "pads": [0, 0, 0, 0],
+                         "group": num_groups
+                     })
+    node_3 = gs.Node(name="Conv-3",
+                     op="Conv",
+                     inputs=[X2, W2],
+                     outputs=[X3],
+                     attrs={
+                         "kernel_shape": [1, 1],
+                         "strides": [1, 1],
+                         "pads": [0, 0, 0, 0],
+                         "group": num_groups
+                     })
 
-    graph = gs.Graph(nodes=[node_1, node_2, node_3], inputs=[X0], outputs=[X3], opset=opset_version)
+    graph = gs.Graph(nodes=[node_1, node_2, node_3],
+                     inputs=[X0],
+                     outputs=[X3],
+                     opset=opset_version)
     model = gs.export_onnx(graph)
     # Shape inference does not quite work here because of the custom operator.
     # model = onnx.shape_inference.infer_shapes(model)
     onnx.save(model, onnx_file_path)
+
 
 if __name__ == '__main__':
 
