@@ -14,5 +14,5 @@ python -m unittest test_engine
 To run the TensorRT engine, please run the following command.
 
 ```bash
-$ python scripts/run_engine.py
+$ python main.py
 ```
