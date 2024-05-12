@@ -74,10 +74,10 @@ class HostDeviceMem:
                                            (size, ))
         self._device = cuda_call(cudart.cudaMalloc(nbytes))
         self._nbytes = nbytes
-        self.name = name
-        self.shape = shape
-        self.format = format
-        self.dtype = dtype
+        self._name = name
+        self._shape = shape
+        self._format = format
+        self._dtype = dtype
 
     @property
     def host(self) -> np.ndarray:
@@ -98,6 +98,22 @@ class HostDeviceMem:
     @property
     def nbytes(self) -> int:
         return self._nbytes
+
+    @property
+    def name(self) -> Optional[str]:
+        return self._name
+
+    @property
+    def shape(self) -> Optional[trt.Dims]:
+        return self._shape
+
+    @property
+    def format(self) -> Optional[trt.TensorFormat]:
+        return self._format
+
+    @property
+    def dtype(self) -> np.dtype:
+        return self._dtype
 
     def __str__(self):
         return f"Host:\n{self.host}\nDevice:\n{self.device}\nSize:\n{self.nbytes}\n"
