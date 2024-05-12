@@ -62,6 +62,7 @@ class TestMain(unittest.TestCase):
     def test_plugin(self):
 
         plugin_lib_file_path = "../build/src/libidentity_conv.so"
+
         engine = build_engine_from_plugin(
             plugin_lib_file_path=plugin_lib_file_path)
 
