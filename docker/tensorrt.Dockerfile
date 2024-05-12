@@ -1,4 +1,4 @@
-FROM nvcr.io/nvidia/tensorrt:23.12-py3
+FROM nvcr.io/nvidia/tensorrt:24.02-py3
 
 ARG CMAKE_VERSION=3.28.0
 ARG NUM_JOBS=8
@@ -33,7 +33,8 @@ RUN cd /tmp && \
 RUN rm -rf /tmp/*
 
 RUN pip install --upgrade pip setuptools wheel
-RUN pip install numpy==1.26.3 \
+RUN pip install cuda-python==12.3.0 \
+                numpy==1.26.3 \
                 onnx==1.15.0
 RUN pip install --extra-index-url https://pypi.ngc.nvidia.com onnx_graphsurgeon==0.3.27
-RUN pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
+RUN pip install torch==2.3.0+cu121 --index-url https://download.pytorch.org/whl/cu121

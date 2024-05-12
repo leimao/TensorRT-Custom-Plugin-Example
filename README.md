@@ -13,7 +13,7 @@ The ONNX model we created is a simple identity neural network that consists of t
 To build the custom Docker image, please run the following command.
 
 ```bash
-$ docker build -f docker/tensorrt.Dockerfile --no-cache --tag=tensorrt:23.12 .
+$ docker build -f docker/tensorrt.Dockerfile --no-cache --tag=tensorrt:24.02 .
 ```
 
 ### Run Docker Container
@@ -21,7 +21,7 @@ $ docker build -f docker/tensorrt.Dockerfile --no-cache --tag=tensorrt:23.12 .
 To run the custom Docker container, please run the following command.
 
 ```bash
-$ docker run -it --rm --gpus device=0 -v $(pwd):/mnt tensorrt:23.12
+$ docker run -it --rm --gpus device=0 -v $(pwd):/mnt tensorrt:24.02
 ```
 
 ### Build Application

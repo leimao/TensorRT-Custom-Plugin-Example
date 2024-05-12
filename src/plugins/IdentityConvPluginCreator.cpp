@@ -14,7 +14,7 @@ namespace plugin
 {
 
 // This is not needed for plugin dynamic registration.
-// REGISTER_TENSORRT_PLUGIN(IdentityConvCreator);
+REGISTER_TENSORRT_PLUGIN(IdentityConvCreator);
 
 // Plugin creator
 IdentityConvCreator::IdentityConvCreator()
