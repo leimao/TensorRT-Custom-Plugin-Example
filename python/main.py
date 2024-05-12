@@ -6,8 +6,8 @@ import common_runtime
 
 def main():
 
-    engine_file_path = "data/identity_neural_network.engine"
-    plugin_lib_file_path = "build/src/libidentity_conv.so"
+    engine_file_path = "../data/identity_neural_network.engine"
+    plugin_lib_file_path = "../build/src/libidentity_conv.so"
 
     common_runtime.load_plugin_lib(plugin_lib_file_path)
     engine = common_runtime.load_engine(engine_file_path)
