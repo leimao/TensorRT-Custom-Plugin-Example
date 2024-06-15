@@ -14,4 +14,3 @@ target_link_libraries(build_engine PRIVATE ${NVINFER_LIB} ${NVONNXPARSER_LIB} ${
 add_executable(run_engine run_engine.cpp)
 target_link_libraries(run_engine PRIVATE ${NVINFER_LIB} CUDA::cudart)
 
-# add_subdirectory(plugins)
