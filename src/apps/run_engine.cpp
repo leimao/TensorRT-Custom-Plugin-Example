@@ -84,13 +84,20 @@ bool all_close(float const* a, float const* b, size_t size, float rtol = 1e-5f,
 
 int main(int argc, char** argv)
 {
-    CustomLogger logger{};
+    if (argc != 3)
+    {
+        std::cerr << "Usage: " << argv[0]
+                  << " <plugin_library_path> <engine_file_path>" << std::endl;
+        return EXIT_FAILURE;
+    }
 
-    // The plugin has already been serialized with the engine.
-    // There is no need to load the plugin library.
-    std::string const data_dir_path{"data"};
-    std::string const engine_file_name{"identity_neural_network.engine"};
-    std::string const engine_file_path{data_dir_path + "/" + engine_file_name};
+    std::string const plugin_library_path{argv[1]};
+    std::string const engine_file_path{argv[2]};
+
+    std::cout << "Plugin library path: " << plugin_library_path << std::endl;
+    std::cout << "Engine file path: " << engine_file_path << std::endl;
+
+    CustomLogger logger{};
 
     // Create CUDA stream.
     cudaStream_t stream;
@@ -126,6 +133,9 @@ int main(int argc, char** argv)
         std::cerr << "Failed to create the runtime." << std::endl;
         return EXIT_FAILURE;
     }
+
+    // Load the plugin library.
+    runtime->getPluginRegistry().loadLibrary(plugin_library_path.c_str());
 
     std::ifstream engine_file{engine_file_path, std::ios::binary};
     if (!engine_file)

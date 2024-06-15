@@ -32,17 +32,25 @@ struct InferDeleter
 
 int main(int argc, char** argv)
 {
+    if (argc != 4)
+    {
+        std::cerr
+            << "Usage: " << argv[0]
+            << " <onnx_file_path> <plugin_library_path> <engine_file_path>"
+            << std::endl;
+        return EXIT_FAILURE;
+    }
+
+    std::string const onnx_file_path{argv[1]};
+    std::string const plugin_library_path{argv[2]};
+    std::string const engine_file_path{argv[3]};
+
+    std::cout << "ONNX file path: " << onnx_file_path << std::endl;
+    std::cout << "Plugin library path: " << plugin_library_path << std::endl;
+    std::cout << "Engine file path: " << engine_file_path << std::endl;
+
     CustomLogger logger{};
 
-    std::string const data_dir_path{"data"};
-    std::string const onnx_file_name{"identity_neural_network.onnx"};
-    std::string const engine_file_name{"identity_neural_network.engine"};
-    std::string const onnx_file_path{data_dir_path + "/" + onnx_file_name};
-    std::string const engine_file_path{data_dir_path + "/" + engine_file_name};
-    std::string const plugin_library_name{"libidentity_conv.so"};
-    std::string const plugin_library_dir_path{"build/src"};
-    std::string const plugin_library_path{plugin_library_dir_path + "/" +
-                                          plugin_library_name};
     char const* const plugin_library_path_c_str{plugin_library_path.c_str()};
 
     // Create the builder.
@@ -62,9 +70,12 @@ int main(int argc, char** argv)
     }
 
     // Create the network.
-    uint32_t const flag{
-        1U << static_cast<uint32_t>(
-            nvinfer1::NetworkDefinitionCreationFlag::kEXPLICIT_BATCH)};
+    uint32_t flag{0U};
+    if (getInferLibVersion() < 100000)
+    {
+        flag |= 1U << static_cast<uint32_t>(
+                    nvinfer1::NetworkDefinitionCreationFlag::kEXPLICIT_BATCH);
+    }
     std::unique_ptr<nvinfer1::INetworkDefinition, InferDeleter> network{
         builder->createNetworkV2(flag)};
     if (network == nullptr)
@@ -108,7 +119,6 @@ int main(int argc, char** argv)
     }
     config->setMemoryPoolLimit(nvinfer1::MemoryPoolType::kWORKSPACE, 1U << 20);
     config->setFlag(nvinfer1::BuilderFlag::kFP16);
-    config->setPluginsToSerialize(&plugin_library_path_c_str, 1);
 
     std::unique_ptr<nvinfer1::IHostMemory, InferDeleter> serializedModel{
         builder->buildSerializedNetwork(*network, *config)};

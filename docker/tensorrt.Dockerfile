@@ -1,6 +1,6 @@
-FROM nvcr.io/nvidia/tensorrt:24.02-py3
+FROM nvcr.io/nvidia/tensorrt:24.05-py3
 
-ARG CMAKE_VERSION=3.28.0
+ARG CMAKE_VERSION=3.29.3
 ARG NUM_JOBS=8
 
 ENV DEBIAN_FRONTEND noninteractive

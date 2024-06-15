@@ -13,7 +13,7 @@ The ONNX model we created is a simple identity neural network that consists of t
 To build the custom Docker image, please run the following command.
 
 ```bash
-$ docker build -f docker/tensorrt.Dockerfile --no-cache --tag=tensorrt:24.02 .
+$ docker build -f docker/tensorrt.Dockerfile --no-cache --tag=tensorrt:24.05 .
 ```
 
 ### Run Docker Container
@@ -21,7 +21,7 @@ $ docker build -f docker/tensorrt.Dockerfile --no-cache --tag=tensorrt:24.02 .
 To run the custom Docker container, please run the following command.
 
 ```bash
-$ docker run -it --rm --gpus device=0 -v $(pwd):/mnt tensorrt:24.02
+$ docker run -it --rm --gpus device=0 -v $(pwd):/mnt tensorrt:24.05
 ```
 
 ### Build Application
@@ -33,7 +33,9 @@ $ cmake -B build
 $ cmake --build build --config Release --parallel
 ```
 
-Under the `build/src` directory, the custom plugin library will be saved as `libidentity_conv.so`, the engine builder will be saved as `build_engine`, and the engine runner will be saved as `run_engine`.
+Under the `build/src/plugins` directory, the custom plugin library will be saved as `libidentity_conv_iplugin_v2_io_ext.so` for `IPluginV2Ext` and `libidentity_conv_iplugin_v3.so` for `IPluginV3`, respectively. The `IPluginV2Ext` has been deprecated since TensorRT 10.0.0 and will be removed in the future. The `IPluginV3` is the only recommended interface for custom plugin development.
+
+Under the `build/src/apps` directory, the engine builder will be saved as `build_engine`, and the engine runner will be saved as `run_engine`.
 
 ### Build ONNX Model
 
@@ -67,18 +69,32 @@ The ONNX model will be saved as `identity_neural_network.onnx` under the `data` 
 
 To build the TensorRT engine from the ONNX model, please run the following command.
 
+#### Build Engine with IPluginV2IOExt
+
 ```bash
-$ ./build/src/build_engine
+$ ./build/src/apps/build_engine data/identity_neural_network.onnx build/src/plugins/IdentityConvIPluginV2IOExt/libidentity_conv_iplugin_v2_io_ext.so data/identity_neural_network_iplugin_v2_io_ext.engine
 ```
 
-The TensorRT engine will be saved as `identity_neural_network.engine` under the `data` directory.
+#### Build Engine with IPluginV3
+
+```bash
+$ ./build/src/apps/build_engine data/identity_neural_network.onnx build/src/plugins/IdentityConvIPluginV3/libidentity_conv_iplugin_v3.so data/identity_neural_network_iplugin_v3.engine
+```
 
 ### Run TensorRT Engine
 
 To run the TensorRT engine, please run the following command.
 
+#### Run Engine with IPluginV2IOExt
+
 ```bash
-$ ./build/src/run_engine
+$ ./build/src/apps/run_engine build/src/plugins/IdentityConvIPluginV2IOExt/libidentity_conv_iplugin_v2_io_ext.so data/identity_neural_network_iplugin_v2_io_ext.engine
+```
+
+#### Run Engine with IPluginV3
+
+```bash
+$ ./build/src/apps/run_engine build/src/plugins/IdentityConvIPluginV3/libidentity_conv_iplugin_v3.so data/identity_neural_network_iplugin_v3.engine
 ```
 
 If the custom plugin implementation and integration are correct, the output of the TensorRT engine should be the same as the input.
