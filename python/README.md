@@ -13,6 +13,14 @@ python -m unittest test_engine
 
 To run the TensorRT engine, please run the following command.
 
+### IPluginV2IOExt
+
 ```bash
-$ python main.py
+$ python main.py --engine_file_path ../data/identity_neural_network_iplugin_v2_io_ext.engine --plugin_lib_file_path ../build/src/plugins/IdentityConvIPluginV2IOExt/libidentity_conv_iplugin_v2_io_ext.so
+```
+
+### IPluginV3
+
+```bash
+$ python main.py --engine_file_path ../data/identity_neural_network_iplugin_v3.engine --plugin_lib_file_path ../build/src/plugins/IdentityConvIPluginV3/libidentity_conv_iplugin_v3.so
 ```

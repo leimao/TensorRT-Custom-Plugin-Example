@@ -1,3 +1,4 @@
+import argparse
 import numpy as np
 
 import common
@@ -6,8 +7,26 @@ import common_runtime
 
 def main():
 
-    engine_file_path = "../data/identity_neural_network.engine"
-    plugin_lib_file_path = "../build/src/libidentity_conv.so"
+    # Add an argparser to specify the engine file path and plugin library file path.
+    parser = argparse.ArgumentParser(
+        description="Run an engine with Identity Plugin.")
+    parser.add_argument(
+        "--engine_file_path",
+        type=str,
+        default="../data/identity_neural_network_iplugin_v3.engine",
+        help="Path to the engine file.",
+    )
+    parser.add_argument(
+        "--plugin_lib_file_path",
+        type=str,
+        default=
+        "../build/src/plugins/IdentityConvIPluginV3/libidentity_conv_iplugin_v3.so",
+        help="Path to the plugin library file.",
+    )
+
+    args = parser.parse_args()
+    engine_file_path = args.engine_file_path
+    plugin_lib_file_path = args.plugin_lib_file_path
 
     common_runtime.load_plugin_lib(plugin_lib_file_path)
     engine = common_runtime.load_engine(engine_file_path)
@@ -46,11 +65,14 @@ def main():
 
     # Execute the engine.
     context = engine.create_execution_context()
-    common.do_inference_v2(context,
-                           bindings=bindings,
-                           inputs=inputs,
-                           outputs=outputs,
-                           stream=stream)
+    common.do_inference(
+        context=context,
+        engine=engine,
+        inputs=inputs,
+        outputs=outputs,
+        bindings=bindings,
+        stream=stream,
+    )
 
     # Print output tensor data.
     for host_device_buffer in outputs:
