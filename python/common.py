@@ -1,5 +1,6 @@
 # Slightly modified from
 # https://github.com/NVIDIA/TensorRT/blob/c0c633cc629cc0705f0f69359f531a192e524c0f/samples/python/common.py
+# https://github.com/NVIDIA/TensorRT/blob/ccf119972b50299ba00d35d39f3938296e187f4e/samples/python/common_runtime.py
 
 #
 # SPDX-FileCopyrightText: Copyright (c) 1993-2023 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
@@ -150,8 +151,6 @@ def allocate_buffers(engine: trt.ICudaEngine,
             raise ValueError(f"Binding {binding} has dynamic shape, " +\
                 "but no profile was specified.")
         size = trt.volume(shape)
-        if engine.has_implicit_batch_dimension:
-            size *= engine.max_batch_size
         dtype = np.dtype(trt.nptype(engine.get_tensor_dtype(binding)))
 
         # Allocate host and device buffers
@@ -219,23 +218,38 @@ def _do_inference_base(inputs, outputs, stream, execute_async):
     return [out.host for out in outputs]
 
 
+def _do_inference_base(inputs, outputs, stream, execute_async_func):
+    # Transfer input data to the GPU.
+    kind = cudart.cudaMemcpyKind.cudaMemcpyHostToDevice
+    [
+        cuda_call(
+            cudart.cudaMemcpyAsync(inp.device, inp.host, inp.nbytes, kind,
+                                   stream)) for inp in inputs
+    ]
+    # Run inference.
+    execute_async_func()
+    # Transfer predictions back from the GPU.
+    kind = cudart.cudaMemcpyKind.cudaMemcpyDeviceToHost
+    [
+        cuda_call(
+            cudart.cudaMemcpyAsync(out.host, out.device, out.nbytes, kind,
+                                   stream)) for out in outputs
+    ]
+    # Synchronize the stream
+    cuda_call(cudart.cudaStreamSynchronize(stream))
+    # Return only the host outputs.
+    return [out.host for out in outputs]
+
+
 # This function is generalized for multiple inputs/outputs.
 # inputs and outputs are expected to be lists of HostDeviceMem objects.
-def do_inference(context, bindings, inputs, outputs, stream, batch_size=1):
+def do_inference(context, engine, bindings, inputs, outputs, stream):
 
-    def execute_async():
-        context.execute_async(batch_size=batch_size,
-                              bindings=bindings,
-                              stream_handle=stream)
+    def execute_async_func():
+        context.execute_async_v3(stream_handle=stream)
 
-    return _do_inference_base(inputs, outputs, stream, execute_async)
-
-
-# This function is generalized for multiple inputs/outputs for full dimension networks.
-# inputs and outputs are expected to be lists of HostDeviceMem objects.
-def do_inference_v2(context, bindings, inputs, outputs, stream):
-
-    def execute_async():
-        context.execute_async_v2(bindings=bindings, stream_handle=stream)
-
-    return _do_inference_base(inputs, outputs, stream, execute_async)
+    # Setup context tensor address.
+    num_io = engine.num_io_tensors
+    for i in range(num_io):
+        context.set_tensor_address(engine.get_tensor_name(i), bindings[i])
+    return _do_inference_base(inputs, outputs, stream, execute_async_func)
