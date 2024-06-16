@@ -9,6 +9,8 @@
 #include <NvInferRuntime.h>
 #include <NvInferRuntimePlugin.h>
 
+// In IPluginV3 interface, the plugin name, version, and name space must be
+// specified for the plugin and plugin creator exactly the same.
 constexpr char const* const kIDENTITY_CONV_PLUGIN_NAME{"IdentityConv"};
 constexpr char const* const kIDENTITY_CONV_PLUGIN_VERSION{"1"};
 constexpr char const* const kIDENTITY_CONV_PLUGIN_NAMESPACE{""};

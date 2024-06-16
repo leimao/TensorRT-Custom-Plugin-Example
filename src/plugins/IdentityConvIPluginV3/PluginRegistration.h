@@ -7,7 +7,7 @@
 
 extern "C" void setLoggerFinder(nvinfer1::ILoggerFinder* finder);
 
-extern "C" nvinfer1::IPluginCreator* const*
+extern "C" nvinfer1::IPluginCreatorInterface* const*
 getPluginCreators(int32_t& nbCreators);
 
 #endif // TENSORRT_PLUGIN_REGISTRATION_H

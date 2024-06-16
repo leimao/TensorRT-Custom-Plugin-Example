@@ -15,28 +15,6 @@ namespace nvinfer1
 namespace plugin
 {
 
-// TODO(leimao): Handle noexcept later.
-
-// Write values into buffer
-template <typename Type, typename BufferType>
-void write(BufferType*& buffer, Type const& val)
-{
-    static_assert(sizeof(BufferType) == 1, "BufferType must be a 1 byte type.");
-    std::memcpy(buffer, &val, sizeof(Type));
-    buffer += sizeof(Type);
-}
-
-// Read values from buffer
-template <typename OutType, typename BufferType>
-OutType read(BufferType const*& buffer)
-{
-    static_assert(sizeof(BufferType) == 1, "BufferType must be a 1 byte type.");
-    OutType val{};
-    std::memcpy(&val, static_cast<void const*>(buffer), sizeof(OutType));
-    buffer += sizeof(OutType);
-    return val;
-}
-
 IdentityConv::IdentityConv(IdentityConvParameters const& params)
     : mParams{params}
 {
@@ -85,7 +63,6 @@ IPluginV3* IdentityConv::clone() noexcept
     try
     {
         IPluginV3* const plugin{new IdentityConv{mParams}};
-        // plugin->setPluginNamespace(mPluginNamespace);
         return plugin;
     }
     catch (std::exception const& e)

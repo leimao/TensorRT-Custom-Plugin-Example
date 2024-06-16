@@ -33,7 +33,7 @@ $ cmake -B build
 $ cmake --build build --config Release --parallel
 ```
 
-Under the `build/src/plugins` directory, the custom plugin library will be saved as `libidentity_conv_iplugin_v2_io_ext.so` for `IPluginV2Ext` and `libidentity_conv_iplugin_v3.so` for `IPluginV3`, respectively. The `IPluginV2Ext` has been deprecated since TensorRT 10.0.0 and will be removed in the future. The `IPluginV3` is the only recommended interface for custom plugin development.
+Under the `build/src/plugins` directory, the custom plugin library will be saved as `libidentity_conv_iplugin_v2_io_ext.so` for `IPluginV2Ext` and `libidentity_conv_iplugin_v3.so` for `IPluginV3`, respectively. The `IPluginV2Ext` plugin interface has been deprecated since TensorRT 10.0.0 and will be removed in the future. The `IPluginV3` plugin interface is the only recommended interface for custom plugin development.
 
 Under the `build/src/apps` directory, the engine builder will be saved as `build_engine`, and the engine runner will be saved as `run_engine`.
 

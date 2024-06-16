@@ -71,6 +71,9 @@ int main(int argc, char** argv)
 
     // Create the network.
     uint32_t flag{0U};
+    // For TensorRT < 10.0, explicit dimension has to be specified to
+    // distinguish from the implicit dimension. For TensorRT >= 10.0, explicit
+    // dimension is the only choice and this flag has been deprecated.
     if (getInferLibVersion() < 100000)
     {
         flag |= 1U << static_cast<uint32_t>(

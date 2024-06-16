@@ -2,11 +2,13 @@
 
 ## Unit Test
 
+Assuming the `IPluginV2IOExt` and `IPluginV3` plugins have been built, the engine that uses each of the plugins have been built, the unit tests can be run.
+
 To run the unit test, please run the following command.
 
 ```bash
-python -m unittest test_plugin
-python -m unittest test_engine
+$ python -m unittest test_plugin
+$ python -m unittest test_engine
 ```
 
 ## Run TensorRT Engine
