@@ -41,6 +41,7 @@ class DummyIdentityConvOp(torch.autograd.Function):
             "group_i": group
         }
         output_type = input.type().with_sizes(_get_tensor_sizes(input))
+        # CustomTorchOps is the namespace of the custom operator and it is different from the namespace of the ONNX operator.
         return g.op("CustomTorchOps::IdentityConv", *args,
                     **kwargs).setType(output_type)
 

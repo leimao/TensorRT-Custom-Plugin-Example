@@ -5,6 +5,8 @@
 #include <sstream>
 #include <vector>
 
+#include <dlfcn.h>
+
 #include <NvInfer.h>
 
 #define CHECK_CUDA_ERROR(val) check((val), #val, __FILE__, __LINE__)
@@ -98,6 +100,16 @@ int main(int argc, char** argv)
     std::cout << "Engine file path: " << engine_file_path << std::endl;
 
     CustomLogger logger{};
+
+    // dlopen the plugin library.
+    // The plugin will be registered automatically when the library is loaded.
+    void* const plugin_handle{dlopen(plugin_library_path.c_str(), RTLD_NOW)};
+    if (plugin_handle == nullptr)
+    {
+        std::cerr << "Failed to load the plugin library: " << dlerror()
+                  << std::endl;
+        return EXIT_FAILURE;
+    }
 
     // Create CUDA stream.
     cudaStream_t stream;

@@ -6,6 +6,8 @@
 #include <memory>
 #include <sstream>
 
+#include <dlfcn.h>
+
 #include <NvInfer.h>
 #include <NvOnnxParser.h>
 
@@ -51,8 +53,6 @@ int main(int argc, char** argv)
 
     CustomLogger logger{};
 
-    char const* const plugin_library_path_c_str{plugin_library_path.c_str()};
-
     // Create the builder.
     std::unique_ptr<nvinfer1::IBuilder, InferDeleter> builder{
         nvinfer1::createInferBuilder(logger)};
@@ -61,11 +61,13 @@ int main(int argc, char** argv)
         std::cerr << "Failed to create the builder." << std::endl;
         return EXIT_FAILURE;
     }
-    void* const plugin_handle{
-        builder->getPluginRegistry().loadLibrary(plugin_library_path.c_str())};
+    // dlopen the plugin library.
+    // The plugin will be registered automatically when the library is loaded.
+    void* const plugin_handle{dlopen(plugin_library_path.c_str(), RTLD_NOW)};
     if (plugin_handle == nullptr)
     {
-        std::cerr << "Failed to load the plugin library." << std::endl;
+        std::cerr << "Failed to load the plugin library: " << dlerror()
+                  << std::endl;
         return EXIT_FAILURE;
     }
 
