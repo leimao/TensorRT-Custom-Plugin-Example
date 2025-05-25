@@ -21,7 +21,7 @@ $ docker build -f docker/tensorrt.Dockerfile --no-cache --tag=tensorrt:24.05 .
 To run the custom Docker container, please run the following command.
 
 ```bash
-$ docker run -it --rm --gpus device=0 -v $(pwd):/mnt tensorrt:24.05
+$ docker run -it --rm --gpus device=0 -v $(pwd):/mnt -w /mnt tensorrt:24.05
 ```
 
 ### Build Application
@@ -71,14 +71,30 @@ To build the TensorRT engine from the ONNX model, please run the following comma
 
 #### Build Engine with IPluginV2IOExt
 
+We could build TensorRT engine using the builder application.
+
 ```bash
 $ ./build/src/apps/build_engine data/identity_neural_network.onnx build/src/plugins/IdentityConvIPluginV2IOExt/libidentity_conv_iplugin_v2_io_ext.so data/identity_neural_network_iplugin_v2_io_ext.engine
 ```
 
+Alternatively, we could use `trtexec` to build the TensorRT engine.
+
+```bash
+$ trtexec --onnx=data/identity_neural_network.onnx --saveEngine=data/identity_neural_network_iplugin_v2_io_ext.engine --staticPlugins=build/src/plugins/IdentityConvIPluginV2IOExt/libidentity_conv_iplugin_v2_io_ext.so
+```
+
 #### Build Engine with IPluginV3
+
+We could build TensorRT engine using the builder application.
 
 ```bash
 $ ./build/src/apps/build_engine data/identity_neural_network.onnx build/src/plugins/IdentityConvIPluginV3/libidentity_conv_iplugin_v3.so data/identity_neural_network_iplugin_v3.engine
+```
+
+Alternatively, we could use `trtexec` to build the TensorRT engine.
+
+```bash
+$ trtexec --onnx=data/identity_neural_network.onnx --saveEngine=data/identity_neural_network_iplugin_v3.engine --staticPlugins=build/src/plugins/IdentityConvIPluginV3/libidentity_conv_iplugin_v3.so
 ```
 
 ### Run TensorRT Engine
