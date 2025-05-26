@@ -61,15 +61,20 @@ int main(int argc, char** argv)
         std::cerr << "Failed to create the builder." << std::endl;
         return EXIT_FAILURE;
     }
-    // dlopen the plugin library.
+
+    // dlopen the plugin library using RAII.
     // The plugin will be registered automatically when the library is loaded.
-    void* const plugin_handle{dlopen(plugin_library_path.c_str(), RTLD_NOW)};
+    // Library will be automatically closed when the unique_ptr goes out of
+    // scope
+    std::unique_ptr<void, decltype(&dlclose)> plugin_handle{
+        dlopen(plugin_library_path.c_str(), RTLD_LAZY), &dlclose};
     if (plugin_handle == nullptr)
     {
         std::cerr << "Failed to load the plugin library: " << dlerror()
                   << std::endl;
         return EXIT_FAILURE;
     }
+    // Plugin now loaded and will be automatically unloaded at the end of main()
 
     // Create the network.
     uint32_t flag{0U};
