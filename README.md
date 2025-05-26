@@ -51,17 +51,19 @@ The ONNX model will be saved as `identity_neural_network.onnx` under the `data` 
 
 Alternatively, the ONNX model can be exported from a PyTorch model.
 
-To export an ONNX model with ONNX Opset 15 or above, please run the following command.
+To export an ONNX model with custom operations, please run the following command.
 
 ```bash
-$ python scripts/export_identity_neural_network_new_opset.py
+$ python scripts/export_identity_neural_network.py
 ```
 
-To export an ONNX model with ONNX Opset 14 or below, please run the following command.
+To export an ONNX model with custom operations as ONNX functions, please run the following command.
 
 ```bash
-$ python scripts/export_identity_neural_network_old_opset.py
+$ python scripts/export_identity_neural_network_onnx_function.py
 ```
+
+Note that this method only works with ONNX Opset 15 or above. Such ONNX export has also been deprecated since PyTorch 2.7.0.
 
 The ONNX model will be saved as `identity_neural_network.onnx` under the `data` directory.
 

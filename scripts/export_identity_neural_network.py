@@ -38,10 +38,19 @@ class DummyIdentityConvOp(torch.autograd.Function):
             "kernel_shape_i": kernel_shape,
             "strides_i": strides,
             "pads_i": pads,
-            "group_i": group
+            "group_i": group,
+            # The plugin needs to be found by the `nvinfer1::IPluginRegistry::getPluginCreator` function.
+            # https://docs.nvidia.com/deeplearning/tensorrt/archives/tensorrt-861/api/c_api/classnvinfer1_1_1_i_plugin_registry.html#a7069e891f4c02cfb206d300f236bc697
+            # Otherwise, the build will fail because the plugin is not found.
+            # This means the plugin must also be registered with the same plugin namespace and version.
+            # The version is implemented by the plugin and cannot be changed during the runtime.
+            # The namespace is configured when the plugin creator is registered during the runtime.
+            "plugin_version_s": "1",
+            "plugin_namespace_s": "",
         }
         output_type = input.type().with_sizes(_get_tensor_sizes(input))
-        # CustomTorchOps is the namespace of the custom operator and it is different from the namespace of the ONNX operator.
+        # CustomTorchOps is the namespace of the custom operator.
+        # It does not affect TensorRT parsing and the interaction with TensorRT plugins though.
         return g.op("CustomTorchOps::IdentityConv", *args,
                     **kwargs).setType(output_type)
 
@@ -113,7 +122,7 @@ class IdentityNeuralNetwork(nn.Module):
 
 if __name__ == "__main__":
 
-    opset_version = 13
+    opset_version = 15
     data_directory_path = "data"
     onnx_file_name = "identity_neural_network.onnx"
     onnx_file_path = os.path.join(data_directory_path, onnx_file_name)

@@ -31,7 +31,10 @@ class IdentityConvBase(nn.Module):
 
 class IdentityConv(IdentityConvBase):
 
-    __constants__ = ["kernel_shape", "strides", "pads", "group"]
+    __constants__ = [
+        "kernel_shape", "strides", "pads", "group", "plugin_version",
+        "plugin_namespace"
+    ]
     # Attributes to match the plugin requirements.
     # Must follow the type annotations via PEP 526-style.
     # https://peps.python.org/pep-0526/#class-and-instance-variable-annotations
@@ -39,6 +42,8 @@ class IdentityConv(IdentityConvBase):
     strides: ClassVar[List[int]]
     pads: ClassVar[List[int]]
     group: int
+    plugin_version: str
+    plugin_namespace: str
 
     def __init__(self, channels):
         super(IdentityConv, self).__init__(channels)
@@ -48,6 +53,14 @@ class IdentityConv(IdentityConvBase):
         # ONNX expects a list of 4 pad values whereas PyTorch uses a list of 2 pad values.
         self.pads = self.pads + self.pads
         self.group = self.conv.groups
+        # The plugin needs to be found by the `nvinfer1::IPluginRegistry::getPluginCreator` function.
+        # https://docs.nvidia.com/deeplearning/tensorrt/archives/tensorrt-861/api/c_api/classnvinfer1_1_1_i_plugin_registry.html#a7069e891f4c02cfb206d300f236bc697
+        # Otherwise, the build will fail because the plugin is not found.
+        # This means the plugin must also be registered with the same plugin namespace and version.
+        # The version is implemented by the plugin and cannot be changed during the runtime.
+        # The namespace is configured when the plugin creator is registered during the runtime.
+        self.plugin_version = "1"
+        self.plugin_namespace = ""
 
     def forward(self, x):
         # Call the parent class method.
