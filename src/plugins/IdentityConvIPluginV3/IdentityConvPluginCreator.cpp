@@ -13,7 +13,9 @@ namespace nvinfer1
 namespace plugin
 {
 
-// This is not needed for plugin dynamic registration.
+// Plugin static registration to namespace "".
+// Static registration does not allow registering to a different namespace.
+// If there is such a need, perform dynamic registration instead.
 REGISTER_TENSORRT_PLUGIN(IdentityConvCreator);
 
 // Plugin creator

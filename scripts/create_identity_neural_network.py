@@ -10,7 +10,7 @@ import onnx_graphsurgeon as gs
 
 def main():
 
-    opset_version = 13
+    opset_version = 15
     data_directory_path = "data"
     onnx_file_name = "identity_neural_network.onnx"
     onnx_file_path = os.path.join(data_directory_path, onnx_file_name)
@@ -54,16 +54,25 @@ def main():
     #                    "pads": [0, 0, 0, 0],
     #                    "group": num_groups
     #                })
-    node_2 = gs.Node(name="Conv-2",
-                     op="IdentityConv",
-                     inputs=[X1, W1],
-                     outputs=[X2],
-                     attrs={
-                         "kernel_shape": [1, 1],
-                         "strides": [1, 1],
-                         "pads": [0, 0, 0, 0],
-                         "group": num_groups
-                     })
+    node_2 = gs.Node(
+        name="Conv-2",
+        op="IdentityConv",
+        inputs=[X1, W1],
+        outputs=[X2],
+        attrs={
+            "kernel_shape": [1, 1],
+            "strides": [1, 1],
+            "pads": [0, 0, 0, 0],
+            "group": num_groups,
+            # The plugin needs to be found by the `nvinfer1::IPluginRegistry::getPluginCreator` function.
+            # https://docs.nvidia.com/deeplearning/tensorrt/archives/tensorrt-861/api/c_api/classnvinfer1_1_1_i_plugin_registry.html#a7069e891f4c02cfb206d300f236bc697
+            # Otherwise, the build will fail because the plugin is not found.
+            # This means the plugin must also be registered with the same plugin namespace and version.
+            # The version is implemented by the plugin and cannot be changed during the runtime.
+            # The namespace is configured when the plugin creator is registered during the runtime.
+            "plugin_version": "1",
+            "plugin_namespace": "",
+        })
     node_3 = gs.Node(name="Conv-3",
                      op="Conv",
                      inputs=[X2, W2],
